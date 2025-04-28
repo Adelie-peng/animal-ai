@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
-from app.services.scrapper import scrape_animal_info, korean_to_english
+from app.services.scraper import scrape_animal_info, korean_to_english
 
 router = APIRouter()
 
