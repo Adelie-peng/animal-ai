@@ -2,12 +2,18 @@
 # Upload + Predict 샘플
 
 from fastapi import APIRouter, UploadFile, File
-from app.services import model
+from fastapi.responses import JSONResponse
+from app.services.model import segment_animal
 
 router = APIRouter()
 
 @router.post("/predict")
 async def predict_animal(file: UploadFile = File(...)):
     contents = await file.read()
-    result = model.predict(contents)  # 모델 인퍼런스 호출
-    return {"animal": result}
+
+    # segment_animal 함수 호출 (MobileSAM 사용)
+    segmented_image_info = segment_animal(contents)
+
+    return JSONResponse(content={
+        "segmented_info": segmented_image_info
+    })
