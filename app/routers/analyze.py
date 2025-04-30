@@ -1,11 +1,30 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from typing import List, Tuple, Optional
 from app.services.sam_service import sam_service
-from services.classifier_service import AnimalClassifier
-from services.db_service import AnimalDatabase
-from services.chat_service import ChatBotService
+from app.services.classifier_service import AnimalClassifier
+from app.services.db_service import AnimalDatabase
+from app.services.chat_service import ChatBotService
 from PIL import Image
 import numpy as np
 import io
+import logging
+
+# 로거 설정
+logger = logging.getLogger(__name__)
+
+# 응답 모델 정의
+class AnimalPrediction(BaseModel):
+    animal: str
+    confidence: float
+
+class AnalysisResponse(BaseModel):
+    animal: str
+    confidence: float
+    top3_predictions: List[Tuple[str, float]]
+    info: dict
+    friendly_message: str
 
 router = APIRouter()
 
@@ -14,27 +33,74 @@ classifier = AnimalClassifier()
 db_service = AnimalDatabase()
 chatbot_service = ChatBotService()
 
-@router.post("/analyze/")
-async def analyze_animal(file: UploadFile = File(...)):
-    image_data = await file.read()
-    image = Image.open(io.BytesIO(image_data)).convert("RGB")
+@router.post("/analyze/", response_model=AnalysisResponse)
+async def analyze_animal(file: UploadFile = File(...)) -> AnalysisResponse:
+    """
+    동물 이미지를 분석하여 종류를 식별하고 관련 정보를 반환합니다.
+    
+    Args:
+        file (UploadFile): 분석할 동물 이미지 파일
+    
+    Returns:
+        AnalysisResponse: 분석 결과를 포함하는 응답 객체
+    
+    Raises:
+        HTTPException: 이미지 처리 또는 분석 중 오류 발생 시
+    """
+    try:
+        # 이미지 파일 검증
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Invalid file type. Please upload an image.")
+        
+        # 이미지 로드
+        image_data = await file.read()
+        try:
+            image = Image.open(io.BytesIO(image_data)).convert("RGB")
+        except Exception as e:
+            logger.error(f"Failed to open image: {str(e)}")
+            raise HTTPException(status_code=400, detail="Failed to process image")
 
-    # 여기서는 적절한 포인트가 있어야 작동하지만, 샘플 호출용이라면 더미 포인트 사용 가능
-    input_point = (512, 512)  # 예시
-    _, mask, _ = sam_service.segment(image_path=file.file, input_point=input_point)
+        # 이미지 크기 검증
+        if image.size[0] < 64 or image.size[1] < 64:
+            raise HTTPException(status_code=400, detail="Image too small")
 
-    classification_result = classifier.classify_animal(image, mask)
-    animal_class = classification_result["class"]
-    confidence = classification_result["confidence"]
-    top3 = classification_result["top3"]
+        # 중앙점 계산 (기본 포인트 대신)
+        input_point = (image.size[0] // 2, image.size[1] // 2)
+        
+        try:
+            # 세그멘테이션 수행
+            _, mask, _ = sam_service.segment(
+                image_path=file.file, 
+                input_point=input_point
+            )
+            
+            # 동물 분류
+            classification_result = classifier.classify_animal(image, mask)
+            
+            # 데이터베이스에서 정보 조회
+            animal_info = db_service.get_info(classification_result["class"])
+            if not animal_info:
+                logger.warning(f"No information found for {classification_result['class']}")
+                animal_info = {"message": "Additional information not available"}
+            
+            # 챗봇 응답 생성
+            friendly_message = chatbot_service.generate_response(
+                classification_result["class"], 
+                animal_info
+            )
 
-    animal_info = db_service.get_info(animal_class)
-    friendly_message = chatbot_service.generate_response(animal_class, animal_info)
+            return AnalysisResponse(
+                animal=classification_result["class"],
+                confidence=classification_result["confidence"],
+                top3_predictions=classification_result["top3"],
+                info=animal_info,
+                friendly_message=friendly_message
+            )
 
-    return {
-        "animal": animal_class,
-        "confidence": confidence,
-        "top3_predictions": top3,
-        "info": animal_info,
-        "friendly_message": friendly_message,
-    }
+        except Exception as e:
+            logger.error(f"Analysis failed: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to analyze image")
+
+    finally:
+        # 파일 핸들러 정리
+        await file.close()
