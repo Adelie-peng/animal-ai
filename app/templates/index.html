@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>동물 이미지 분석 챗봇</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>동물 이미지 분석</h1>
+        <form action="/api/analyze/" method="POST" enctype="multipart/form-data">
+            <div class="upload-area">
+                <input type="file" name="file" id="file" accept="image/*" required>
+                <label for="file">이미지 선택</label>
+            </div>
+            <button type="submit" class="submit-btn">분석하기</button>
+        </form>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

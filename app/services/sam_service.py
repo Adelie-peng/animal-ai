@@ -7,6 +7,7 @@ from typing import Tuple, Optional, Union
 from dataclasses import dataclass
 import logging
 from mobile_sam.build_sam import sam_model_registry
+from pathlib import Path
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -20,41 +21,11 @@ class SegmentationError(Exception):
 class SamService:
     """MobileSAM을 사용한 이미지 세그멘테이션 서비스"""
     
-    def __init__(self, model_type: str, checkpoint_path: str, device: Optional[str] = None):
-        """
-        SAM 서비스 초기화
-        
-        Args:
-            model_type (str): SAM 모델 타입
-            checkpoint_path (str): 모델 체크포인트 경로
-            device (Optional[str]): 실행 디바이스 ('cuda' or 'cpu')
-            
-        Raises:
-            SegmentationError: 모델 초기화 실패 시
-        """
-        try:
-            self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-            logger.info(f"Using device: {self.device}")
-            
-            # 모델 경로 검증
-            if not os.path.exists(checkpoint_path):
-                raise FileNotFoundError(f"Model checkpoint not found: {checkpoint_path}")
-            
-            # 모델 초기화
-            self.model = sam_model_registry[model_type](checkpoint=checkpoint_path).to(self.device)
-            self.model.eval()
-            
-            # 변환기 설정
-            self.transform = transforms.Compose([
-                transforms.Resize((1024, 1024)),
-                transforms.ToTensor(),
-            ])
-            
-            logger.info("SAM service initialized successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize SAM service: {str(e)}")
-            raise SegmentationError("SAM 서비스 초기화 실패", {"error": str(e)})
+    def __init__(self, model_type: str = "vit_t"):
+        self.model_path = Path(__file__).parent.parent.parent / 'external' / 'MobileSAM' / 'weights' / 'mobile_sam.pt'
+        if not self.model_path.exists():
+            raise FileNotFoundError(f"모델 가중치를 찾을 수 없습니다: {self.model_path}")
+        # ...existing code...
 
     def segment(self, image_path: Union[str, bytes], 
                 input_point: Tuple[int, int], 
