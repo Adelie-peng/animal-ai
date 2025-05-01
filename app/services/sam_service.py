@@ -6,7 +6,8 @@ from PIL import Image
 from typing import Tuple, Optional, Union
 from dataclasses import dataclass
 import logging
-from mobile_sam.build_sam import sam_model_registry
+from mobile_sam import sam_model_registry
+from mobile_sam.predictor import SamPredictor
 from pathlib import Path
 
 # 로거 설정
@@ -22,10 +23,42 @@ class SamService:
     """MobileSAM을 사용한 이미지 세그멘테이션 서비스"""
     
     def __init__(self, model_type: str = "vit_t"):
-        self.model_path = Path(__file__).parent.parent.parent / 'external' / 'MobileSAM' / 'weights' / 'mobile_sam.pt'
-        if not self.model_path.exists():
-            raise FileNotFoundError(f"모델 가중치를 찾을 수 없습니다: {self.model_path}")
-        # ...existing code...
+        """
+        MobileSAM 서비스 초기화
+        
+        Args:
+            model_type: 모델 타입 (기본값: "vit_t")
+        """
+        try:
+            # 모델 가중치 경로 설정
+            self.model_path = Path(__file__).parent.parent.parent / 'external' / 'MobileSAM' / 'weights' / 'mobile_sam.pt'
+            if not self.model_path.exists():
+                raise FileNotFoundError(f"모델 가중치를 찾을 수 없습니다: {self.model_path}")
+                
+            # 장치 설정
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            logger.info(f"Using device: {self.device}")
+            
+            # 모델 로드
+            self.model = sam_model_registry[model_type](checkpoint=str(self.model_path))
+            self.model.to(device=self.device)
+            self.model.eval()
+            
+            # 이미지 전처리 설정
+            self.transform = transforms.Compose([
+                transforms.Resize((1024, 1024)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+            
+            # 프리딕터 초기화
+            self.predictor = SamPredictor(self.model)
+            
+            logger.info(f"SamService initialized with model_type: {model_type}")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize SamService: {str(e)}")
+            raise SegmentationError("서비스 초기화 실패", {"error": str(e)})
 
     def segment(self, image_path: Union[str, bytes], 
                 input_point: Tuple[int, int], 
@@ -133,10 +166,7 @@ class SamService:
 
 # 전역 인스턴스 생성
 try:
-    sam_service = SamService(
-        model_type="vit_t",
-        checkpoint_path="E:/0. study/0. AI/AnImals/external/MobileSAM/weights/mobile_sam.pt"
-    )
+    sam_service = SamService(model_type="vit_t")
     logger.info("Global SAM service instance created successfully")
 except Exception as e:
     logger.critical(f"Failed to create global SAM service instance: {str(e)}")
