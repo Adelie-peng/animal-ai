@@ -4,83 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ animal }} 정보</title>
-    <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            color: #333;
-            background-color: #f9f9f9;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 30px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            margin-top: 30px;
-        }
-        h1 {
-            color: #3498db;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .image-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .image-container img {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 10px;
-        }
-        .info-container {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            line-height: 1.8;
-        }
-        .predictions {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
-        }
-        .prediction {
-            text-align: center;
-            padding: 15px;
-            background-color: #e8f4fc;
-            border-radius: 10px;
-            width: 30%;
-        }
-        .prediction h3 {
-            margin-top: 0;
-            color: #2980b9;
-        }
-        .action-buttons {
-            text-align: center;
-            margin-top: 30px;
-        }
-        .action-button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 0 10px;
-            transition: background-color 0.3s;
-        }
-        .action-button:hover {
-            background-color: #2980b9;
-        }
-        .confidence {
-            font-size: 14px;
-            color: #7f8c8d;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div class="container">
@@ -101,32 +25,5 @@
             <a href="javascript:history.back()" class="action-button">이전 페이지로 돌아가기</a>
         </div>
     </div>
-    
-    <script>
-        // URL 파라미터 파싱 함수
-        function getParameterByName(name, url = window.location.href) {
-            name = name.replace(/[\[\]]/g, '\\$&');
-            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-                results = regex.exec(url);
-            if (!results) return null;
-            if (!results[2]) return '';
-            return decodeURIComponent(results[2].replace(/\+/g, ' '));
-        }
-        
-        // 페이지 로드 시 URL 파라미터에서 정보 가져오기
-        window.onload = function() {
-            const animal = getParameterByName('animal');
-            const info = getParameterByName('info');
-            
-            if (animal) {
-                document.title = animal + ' 정보';
-                document.querySelector('h1').textContent = animal + ' 정보';
-            }
-            
-            if (info) {
-                document.querySelector('.info-container').innerHTML = info;
-            }
-        };
-    </script>
 </body>
 </html>

@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware  # 세션 미들웨어 추가
 from pathlib import Path
 import sys
 from app.routers import analyze, predict, upload
@@ -15,6 +16,13 @@ sys.path.append(str(MOBILE_SAM_PATH))
 
 # FastAPI 앱 초기화
 app = FastAPI()
+
+# 세션 미들웨어 추가
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="your-secret-key-change-this",  # 실제 프로젝트에서는 보안 키 변경 필요
+    max_age=1800  # 세션 만료 시간 (초)
+)
 
 # CORS 미들웨어 설정
 app.add_middleware(
@@ -42,12 +50,19 @@ MOBILE_SAM_WEIGHTS = MOBILE_SAM_PATH / 'weights' / 'mobile_sam.pt'
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# 결과 페이지 핸들러
+# 결과 페이지 핸들러 - GET 방식
 @app.get("/result")
-async def result(request: Request, animal: str = "", img_path: str = "", info: str = ""):
+async def result_page(request: Request):
+    # 세션에서 분석 결과 데이터 가져오기
+    result_data = request.session.get("analysis_result", {})
+    
+    # 선택적으로 세션에서 데이터 삭제 (일회성 데이터로 처리)
+    if "analysis_result" in request.session:
+        del request.session["analysis_result"]
+    
     return templates.TemplateResponse("result.html", {
         "request": request,
-        "animal": animal,
-        "img_path": img_path,
-        "info": info
+        "animal": result_data.get("animal", ""),
+        "info": result_data.get("friendly_message", ""),
+        "img_path": result_data.get("img_path", "")
     })

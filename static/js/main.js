@@ -83,20 +83,19 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('file', fileInput.files[0]);
         
         try {
-            // 백엔드 API 호출
+            // 백엔드 API 호출 - 세션에 데이터 저장
             const response = await fetch('http://127.0.0.1:8000/api/analyze/', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'include'  // 쿠키/세션 포함
             });
             
             if (!response.ok) {
                 throw new Error('이미지 분석 중 오류가 발생했습니다.');
             }
             
-            const result = await response.json();
-            
-            // 결과 페이지로 이동
-            window.location.href = `http://127.0.0.1:8000/result?animal=${encodeURIComponent(result.animal)}&info=${encodeURIComponent(result.friendly_message)}`;
+            // 결과 페이지로 이동 (쿼리 매개변수 없음)
+            window.location.href = 'http://127.0.0.1:8000/result';
             
         } catch (error) {
             console.error('Error:', error);
