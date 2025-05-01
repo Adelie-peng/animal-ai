@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>동물 질문하기</title>
+</head>
+<body>
+    <h1>동물 질문하기</h1>
+    <form method="POST" action="/ask">
+        <label>동물에 대해 궁금한 점을 입력하세요:</label><br>
+        <input type="text" name="question" required>
+        <button type="submit">질문하기</button>
+    </form>
+    {% if answer %}
+        <h3>Gemini의 답변:</h3>
+        <p>{{ answer }}</p>
+    {% endif %}
+    <br><a href="/">🔙 동물 검색으로 돌아가기</a>
+</body>
+</html>

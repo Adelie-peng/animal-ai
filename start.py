@@ -7,7 +7,7 @@ import time
 import openai
 
 # ⛳️ OpenAI API 키 설정
-openai.api_key = "REMOVED "  # 🔒 반드시 본인의 키로 바꾸세요!
+openai.api_key = ''
 
 def fetch_animal_info(url, output_file="animal_info.txt"):
     options = Options()
