@@ -5,21 +5,6 @@ import time
 import os
 from selenium.webdriver.common.keys import Keys
 import re
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
-BASE_URL = "https://animalia.bio"
-statuses = {
-    "ne": "not-evaluated-ne",
-    "dd": "data-deficient-dd",
-    "lc": "least-concern-lc",
-    "nt": "near-threatened-nt",
-    "vu": "vulnerable-vu",
-    "en": "endangered-en",
-    "cr": "critically-endangered-cr",
-    "ew": "extinct-in-the-wild-ew",
-    "ex": "extinct-ex"
-}
 
 # Chrome 옵션 설정
 options = Options()
@@ -27,48 +12,65 @@ options.add_argument("--start-maximized")
 options.add_experimental_option("excludeSwitches", ["enable-logging"])
 driver = webdriver.Chrome(options=options)
 
-# 한글 이름을 입력받고, 영어 이름으로 변환하는 함수
-def find_english_name_by_korean(korean_name):
-    for code, path in statuses.items():
-        folder = os.path.join(os.getcwd(), f"animals_{code}")
-        file_path = os.path.join(folder, "animals.txt")
-        
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-                for line in lines:
-                    en_name, ko_name = line.strip().split(" / ")
-                    if ko_name == korean_name:
-                        return en_name
-    return None
+# 한글 이름 -> 영어 이름 변환 딕셔너리 생성
+def load_animal_names(file_path):
+    animal_dict = {}
+    with open(file_path, "r", encoding="utf-8") as f:
+        for line in f.readlines():
+            if line.strip():
+                en_name, ko_name = line.strip().split(" / ")
+                animal_dict[ko_name] = en_name
+    return animal_dict
 
-# 사용자로부터 한글 이름을 입력받고 동물 정보로 이동
-def move_to_animal_info(korean_name):
-    english_name = find_english_name_by_korean(korean_name)
-    
-    if english_name:
-        print(f"한글 이름 '{korean_name}'에 대한 영어 이름: {english_name}")
-        
-        # 영어 이름을 URL 슬러그로 변환하여 해당 동물 페이지로 이동
-        url_slug = to_url_slug(english_name)
-        driver.get(f"https://animalia.bio/ko/{url_slug}")
-        time.sleep(3)
-        print(f"동물 페이지로 이동: {driver.current_url}")
-    else:
-        print(f"한글 이름 '{korean_name}'을(를) 찾을 수 없습니다.")
+# 한글 이름을 입력받아 영어 이름을 찾아주는 함수
+def get_english_name(ko_name, animal_dict):
+    return animal_dict.get(ko_name, None)
 
-# 이름을 URL용 슬러그로 변환 (공백은 -로, 작은따옴표는 없애기)
+# 한글 이름을 URL-friendly한 슬러그로 변환
 def to_url_slug(name):
-    name = name.lower()  # 모두 소문자로 변환
-    name = re.sub(r"[’'\",\.]", "", name)  # 작은 따옴표와 불필요한 기호 제거
-    name = re.sub(r"\s+", "-", name)  # 공백은 -로 변환
+    name = name.lower()
+    name = re.sub(r"[’'\",\.]", "", name)
+    name = re.sub(r"\s+", "-", name)
     return name
 
-# 테스트 예시: 한글로 질문을 받기
-while True:
-    korean_name = input("한글 동물 이름을 입력하세요 (종료하려면 'exit' 입력): ").strip()
-    if korean_name.lower() == "exit":
-        break
-    move_to_animal_info(korean_name)
+# 한글 이름 입력받기
+ko_name_input = input("알고 싶은 동물의 한글 이름을 입력하세요: ")
+
+# animals.txt에서 동물 이름 매핑
+animal_dict = load_animal_names("animals.txt")
+
+# 한글 이름에 해당하는 영어 이름 찾기
+en_name = get_english_name(ko_name_input, animal_dict)
+
+if en_name:
+    print(f"입력한 한글 이름: {ko_name_input} -> 영어 이름: {en_name}")
+
+    # 영어 이름을 URL로 변환
+    url_slug = to_url_slug(en_name)
+    url = f"https://animalia.bio/ko/{url_slug}"
+    
+    # 동물 정보 페이지로 이동
+    driver.get(url)
+    time.sleep(3)  # 페이지가 로드될 때까지 잠시 대기
+
+    try:
+        # 동물 정보가 있는 영역을 찾고 출력
+        # 예시로 동물 이름을 출력하는 부분을 찾기
+        animal_name_element = driver.find_element(By.CLASS_NAME, "a-h1")
+        animal_name = animal_name_element.text.strip()
+        
+        # 추가적으로 필요한 정보를 가져올 수 있습니다.
+        print(f"동물 이름: {animal_name}")
+        
+        # 추가 정보가 있다면 그 정보도 추출
+        # 예: 설명, 분포 지역, 식습관 등
+        description_element = driver.find_element(By.CLASS_NAME, "a-description")
+        description = description_element.text.strip() if description_element else "설명 없음"
+        
+        print(f"설명: {description}")
+    except Exception as e:
+        print(f"동물 정보를 가져오는 데 실패했습니다: {e}")
+else:
+    print(f"입력한 한글 이름 '{ko_name_input}'에 해당하는 영어 이름을 찾을 수 없습니다.")
 
 driver.quit()
