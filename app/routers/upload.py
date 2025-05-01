@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Optional
-from app.services.scraper import scrape_animal_info, korean_to_english
+from app.services.animal_data import animal_data_service
 import logging
 
 # 로거 설정
@@ -61,14 +61,14 @@ async def upload_image(file: UploadFile = File(...)) -> UploadResponse:
                 detail="Invalid filename. Animal name not found."
             )
 
-        # 동물 정보 스크래핑
+        # 동물 정보 조회
         try:
-            animal_info = scrape_animal_info(animal_name)
+            animal_info = animal_data_service.get_animal_info(animal_name, lang='en')
             if not animal_info:
                 logger.warning(f"No information found for animal: {animal_name}")
                 animal_info = {"message": "No information available"}
         except Exception as e:
-            logger.error(f"Error scraping animal info: {str(e)}")
+            logger.error(f"Error retrieving animal info: {str(e)}")
             animal_info = {"error": "Failed to fetch animal information"}
 
         return UploadResponse(
@@ -111,14 +111,16 @@ async def get_animal_info(animal_kr: str) -> AnimalInfoResponse:
 
         # 번역 및 정보 조회
         try:
-            animal_en = korean_to_english(animal_kr)
+            # 한글 이름을 영어로 번역
+            animal_en = animal_data_service.translate_animal_name(animal_kr, 'ko', 'en')
             if not animal_en:
                 raise HTTPException(
                     status_code=400,
                     detail="Could not translate animal name"
                 )
 
-            animal_info = scrape_animal_info(animal_en)
+            # 영어 이름으로 동물 정보 조회
+            animal_info = animal_data_service.get_animal_info(animal_en, lang='en')
             if not animal_info:
                 logger.warning(f"No information found for animal: {animal_en}")
                 animal_info = {"message": "No information available"}

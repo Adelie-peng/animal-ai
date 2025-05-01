@@ -2,12 +2,28 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>결과</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ animal }} 정보</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>{{ animal }} 정보</h1>
-    <img src="{{ img_path }}" alt="동물 이미지" width="300px">
-    <p>{{ info }}</p>
-    <a href="/">다시 선택하기</a>
+    <div class="container">
+        <h1>{{ animal }} 정보</h1>
+        
+        {% if img_path %}
+        <div class="image-container">
+            <img src="{{ img_path }}" alt="{{ animal }} 이미지">
+        </div>
+        {% endif %}
+        
+        <div class="info-container">
+            {{ info | safe }}
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/" class="action-button">다른 이미지 분석하기</a>
+            <a href="javascript:history.back()" class="action-button">이전 페이지로 돌아가기</a>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import List, Tuple, Optional
 from app.services.sam_service import sam_service
@@ -34,11 +34,12 @@ db_service = AnimalDatabase()
 chatbot_service = ChatBotService()
 
 @router.post("/analyze/", response_model=AnalysisResponse)
-async def analyze_animal(file: UploadFile = File(...)) -> AnalysisResponse:
+async def analyze_animal(request: Request, file: UploadFile = File(...)) -> AnalysisResponse:
     """
     동물 이미지를 분석하여 종류를 식별하고 관련 정보를 반환합니다.
     
     Args:
+        request (Request): FastAPI 요청 객체 (세션 접근용)
         file (UploadFile): 분석할 동물 이미지 파일
     
     Returns:
@@ -89,13 +90,23 @@ async def analyze_animal(file: UploadFile = File(...)) -> AnalysisResponse:
                 animal_info
             )
 
-            return AnalysisResponse(
+            # 결과 생성
+            result = AnalysisResponse(
                 animal=classification_result["class"],
                 confidence=classification_result["confidence"],
                 top3_predictions=classification_result["top3"],
                 info=animal_info,
                 friendly_message=friendly_message
             )
+            
+            # 세션에 분석 결과 저장 (POST-Redirect-GET 패턴용)
+            request.session["analysis_result"] = {
+                "animal": classification_result["class"],
+                "friendly_message": friendly_message,
+                "img_path": ""  # 이미지 경로가 필요하면 여기에 추가
+            }
+            
+            return result
 
         except Exception as e:
             logger.error(f"Analysis failed: {str(e)}")

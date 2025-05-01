@@ -8,14 +8,22 @@
 </head>
 <body>
     <div class="container">
-        <h1>동물 이미지 분석</h1>
-        <form action="/api/analyze/" method="POST" enctype="multipart/form-data">
-            <div class="upload-area">
+        <h1>동물 이미지 분석 챗봇</h1>
+        <div id="upload-form">
+            <div class="upload-area" id="dropArea">
                 <input type="file" name="file" id="file" accept="image/*" required>
                 <label for="file">이미지 선택</label>
+                <p>또는 이미지를 여기에 끌어다 놓으세요</p>
             </div>
-            <button type="submit" class="submit-btn">분석하기</button>
-        </form>
+            <div class="preview-area" id="previewArea" style="display: none;">
+                <img id="previewImage" class="preview-image" alt="미리보기">
+            </div>
+            <button type="button" id="analyzeBtn" class="submit-btn">분석하기</button>
+        </div>
+        <div class="loading" id="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>이미지를 분석 중입니다...</p>
+        </div>
     </div>
     <script src="/static/js/main.js"></script>
 </body>
