@@ -115,3 +115,29 @@ async def analyze_animal(request: Request, file: UploadFile = File(...)) -> Anal
     finally:
         # 파일 핸들러 정리
         await file.close()
+
+@router.post("/analyze/result", response_model=dict)
+async def get_analysis_result(request: Request):
+    """
+    세션에 저장된 분석 결과를 가져와 반환합니다.
+    
+    Args:
+        request (Request): FastAPI 요청 객체 (세션 접근용)
+    
+    Returns:
+        dict: 분석 결과를 포함하는 응답 객체
+    """
+    try:
+        # 세션에서 분석 결과 데이터 가져오기
+        result_data = request.session.get("analysis_result", {})
+        
+        # 세션에서 데이터 삭제
+        if "analysis_result" in request.session:
+            del request.session["analysis_result"]
+            
+        return result_data
+        
+    except Exception as e:
+        logger.error(f"Failed to get analysis result: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get analysis result")
+    

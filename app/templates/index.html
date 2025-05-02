@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>동물 이미지 분석 챗봇</title>
+    <title>ZooBuddy - 동물 이미지 분석 챗봇</title>
     <link rel="stylesheet" href="/static/css/message-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="ios-container">
@@ -69,17 +70,17 @@
                 <div class="message-time">오전 9:42</div>
             </div>
             
-            <!-- 이미지 미리보기 영역 -->
+            <!-- 이미지 미리보기 영역 (초기에는 숨김) -->
             <div class="message-row sent" id="previewArea" style="display: none;">
                 <div class="message-bubble image-preview">
-                    <label for="file"> <!-- 이미지 클릭 시 파일 선택 가능하도록 함 -->
+                    <label for="file">
                         <img id="previewImage" class="preview-image" alt="미리보기">
                     </label>
                 </div>
                 <div class="message-time">방금 전</div>
             </div>
             
-            <!-- 로딩 표시 -->
+            <!-- 로딩 표시 (초기에는 숨김) -->
             <div class="message-row received" id="loading" style="display: none;">
                 <div class="message-bubble loading-bubble">
                     <div class="typing-indicator">

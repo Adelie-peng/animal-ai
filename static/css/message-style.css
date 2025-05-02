@@ -1,4 +1,4 @@
-/* message-style.css - iOS 메시지 스타일 */
+/* message-style.css - 개선된 iOS 메시지 스타일 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
 
 :root {
@@ -10,6 +10,10 @@
     --text-primary: #000000;
     --text-secondary: #8E8E93;
     --text-white: #FFFFFF;
+    --background-light: #FFFFFF;
+    --border-light: #E5E5EA;
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --transition-default: all 0.3s ease;
 }
 
 * {
@@ -34,9 +38,20 @@ body {
     height: 100vh;
     max-width: 100%;
     margin: 0 auto;
-    background-color: white;
+    background-color: var(--background-light);
     position: relative;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 20px var(--shadow-light);
+    transition: var(--transition-default);
+}
+
+@media (min-width: 768px) {
+    .ios-container {
+        max-width: 500px;
+        height: 90vh;
+        margin: 30px auto;
+        border-radius: 18px;
+        overflow: hidden;
+    }
 }
 
 /* 상단 상태 바 */
@@ -47,8 +62,9 @@ body {
     padding: 10px 15px 5px;
     font-size: 14px;
     font-weight: 600;
-    background-color: white;
-    border-bottom: 1px solid #f2f2f2;
+    background-color: var(--background-light);
+    border-bottom: 1px solid var(--border-light);
+    z-index: 10;
 }
 
 .status-icons {
@@ -60,9 +76,13 @@ body {
 .chat-header {
     display: flex;
     align-items: center;
-    padding: 10px 15px;
+    padding: 15px;
     background-color: #F9F9F9;
-    border-bottom: 1px solid #E5E5EA;
+    border-bottom: 1px solid var(--border-light);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
 }
 
 .back-button {
@@ -70,6 +90,11 @@ body {
     height: 24px;
     margin-right: 10px;
     cursor: pointer;
+    transition: var(--transition-default);
+}
+
+.back-button:hover {
+    opacity: 0.7;
 }
 
 .back-button svg {
@@ -82,8 +107,9 @@ body {
 }
 
 .contact-name {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
+    margin-bottom: 2px;
 }
 
 .status {
@@ -95,7 +121,12 @@ body {
     width: 24px;
     height: 24px;
     margin-left: 10px;
-    fill: var(--ios-blue);
+    cursor: pointer;
+    transition: var(--transition-default);
+}
+
+.contact-info:hover {
+    opacity: 0.7;
 }
 
 .contact-info svg {
@@ -105,11 +136,12 @@ body {
 /* 메시지 컨테이너 */
 .messages-container {
     flex: 1;
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
-    background-color: #FFFFFF;
+    background-color: var(--background-light);
     display: flex;
     flex-direction: column;
+    scroll-behavior: smooth;
 }
 
 .date-divider {
@@ -117,10 +149,11 @@ body {
     font-size: 12px;
     color: var(--text-secondary);
     margin: 10px 0;
-    padding: 5px;
+    padding: 5px 12px;
     background-color: rgba(0, 0, 0, 0.05);
     border-radius: 15px;
     align-self: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 /* 메시지 스타일 */
@@ -128,8 +161,9 @@ body {
     display: flex;
     flex-direction: column;
     max-width: 75%;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
     animation: fadeIn 0.3s ease-in-out;
+    position: relative;
 }
 
 .message-row.sent {
@@ -144,28 +178,33 @@ body {
     padding: 10px 15px;
     border-radius: 18px;
     font-size: 16px;
-    line-height: 1.4;
+    line-height: 1.5;
     word-wrap: break-word;
     position: relative;
-    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    transition: var(--transition-default);
+}
+
+.message-bubble:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
 .message-row.sent .message-bubble {
     background-color: var(--message-blue);
-    color: white;
+    color: var(--text-white);
     border-bottom-right-radius: 5px;
 }
 
 .message-row.received .message-bubble {
     background-color: var(--message-gray);
-    color: black;
+    color: var(--text-primary);
     border-bottom-left-radius: 5px;
 }
 
 .message-time {
     font-size: 11px;
     color: var(--text-secondary);
-    margin-top: 2px;
+    margin-top: 4px;
     align-self: flex-end;
 }
 
@@ -179,15 +218,22 @@ body {
 
 /* 이미지 스타일 */
 .image-bubble {
-    padding: 2px !important;
-    background-color: white !important;
-    border: 1px solid #E5E5EA;
+    padding: 4px !important;
+    background-color: var(--background-light) !important;
+    border: 1px solid var(--border-light);
+    transition: var(--transition-default);
+}
+
+.image-bubble:hover {
+    transform: scale(1.01);
 }
 
 .uploaded-image, .preview-image {
     max-width: 100%;
     border-radius: 15px;
     display: block;
+    max-height: 300px;
+    object-fit: cover;
 }
 
 /* 이미지 미리보기 영역 */
@@ -197,17 +243,22 @@ body {
     border-radius: 18px;
     overflow: hidden;
     cursor: pointer; /* 이미지 클릭 가능함을 표시 */
+    transition: var(--transition-default);
+}
+
+.image-preview:hover {
+    background-color: #e8e8e8 !important;
 }
 
 .preview-image {
     max-width: 100%;
     border-radius: 13px;
     display: block;
-    transition: opacity 0.3s;
+    transition: var(--transition-default);
 }
 
 .preview-image:hover {
-    opacity: 0.8; /* 호버 시 약간 투명해져서 클릭 가능함을 표시 */
+    opacity: 0.9; /* 호버 시 약간 투명해져서 클릭 가능함을 표시 */
 }
 
 /* 업로드 영역 */
@@ -215,6 +266,11 @@ body {
     background-color: #F0F0F0 !important;
     padding: 20px !important;
     text-align: center;
+    transition: var(--transition-default);
+}
+
+.upload-area:hover, .upload-area.highlight {
+    background-color: #E8E8E8 !important;
 }
 
 .upload-button {
@@ -223,6 +279,11 @@ body {
     align-items: center;
     color: var(--ios-blue);
     cursor: pointer;
+    transition: var(--transition-default);
+}
+
+.upload-button:hover {
+    transform: scale(1.05);
 }
 
 .upload-button svg {
@@ -230,6 +291,11 @@ body {
     margin-bottom: 8px;
     width: 36px;
     height: 36px;
+    transition: var(--transition-default);
+}
+
+.upload-button:hover svg {
+    fill: #0056b3;
 }
 
 /* 로딩 표시 */
@@ -277,28 +343,40 @@ body {
 
 /* 메시지 입력 영역 */
 .message-input-container {
-    padding: 10px;
+    padding: 10px 15px;
     background-color: #F9F9F9;
-    border-top: 1px solid #E5E5EA;
+    border-top: 1px solid var(--border-light);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
 }
 
 .message-input-wrapper {
     display: flex;
     align-items: center;
-    background-color: white;
-    border-radius: 20px;
+    background-color: var(--background-light);
+    border-radius: 22px;
     padding: 6px 10px;
-    border: 1px solid #E5E5EA;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+    transition: var(--transition-default);
+}
+
+.message-input-wrapper:focus-within {
+    border-color: var(--ios-blue);
+    box-shadow: 0 1px 8px rgba(0, 123, 255, 0.2);
 }
 
 .message-input {
     flex: 1;
     min-height: 24px;
     max-height: 100px;
-    padding: 6px;
+    padding: 8px;
     font-size: 16px;
     outline: none;
     overflow-y: auto;
+    border: none;
+    background: transparent;
 }
 
 .message-input[contenteditable="true"]:empty:before {
@@ -309,16 +387,21 @@ body {
 .send-button {
     background: none;
     border: none;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    border-radius: 50%;
+    transition: var(--transition-default);
 }
 
 .send-button svg {
     fill: #CCCCCC;
+    width: 24px;
+    height: 24px;
+    transition: var(--transition-default);
 }
 
 .send-button:disabled {
@@ -327,11 +410,15 @@ body {
 
 .send-button:not([disabled]) {
     background-color: var(--ios-blue);
-    border-radius: 50%;
+}
+
+.send-button:not([disabled]):hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
 }
 
 .send-button:not([disabled]) svg {
-    fill: white;
+    fill: var(--text-white);
 }
 
 /* 비활성화된 텍스트 스타일 */
@@ -343,15 +430,26 @@ body {
 
 /* 액션 버튼 */
 .action-bubble {
-    background-color: white !important;
-    border: 1px solid #E5E5EA;
+    background-color: var(--background-light) !important;
+    border: 1px solid var(--border-light);
     text-align: center;
+    transition: var(--transition-default);
+}
+
+.action-bubble:hover {
+    background-color: #F5F5F5 !important;
 }
 
 .action-link {
     color: var(--ios-blue);
     text-decoration: none;
     font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-default);
+}
+
+.action-link:hover {
+    color: #0056b3;
 }
 
 /* 결과 제목 */
@@ -365,7 +463,7 @@ body {
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(15px);
     }
     to {
         opacity: 1;
@@ -373,14 +471,92 @@ body {
     }
 }
 
+@keyframes popIn {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 새 이미지 버튼 나타나는 애니메이션 */
+.action-bubble {
+    animation: popIn 0.4s ease-out;
+}
+
 /* 모바일 최적화 */
-@media (max-width: 768px) {
+@media (max-width: 576px) {
     .ios-container {
         max-width: 100%;
         height: 100vh;
+        margin: 0;
     }
     
     .message-row {
-        max-width: 85%;
+        max-width: 80%;
     }
+    
+    .message-bubble {
+        font-size: 15px;
+        padding: 8px 12px;
+    }
+    
+    .upload-button svg {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .chat-header {
+        padding: 10px;
+    }
+    
+    .contact-name {
+        font-size: 16px;
+    }
+}
+
+@media (min-width: 992px) {
+    .ios-container {
+        max-width: 550px;
+    }
+    
+    .message-bubble {
+        font-size: 16px;
+    }
+}
+
+/* 스크롤바 스타일 */
+.messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+ 
+.messages-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+ 
+.messages-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+/* 링크 스타일 */
+a {
+    color: var(--ios-blue);
+    text-decoration: none;
+    transition: var(--transition-default);
+}
+
+a:hover {
+    color: #0056b3;
 }
