@@ -4,26 +4,209 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ animal }} 정보</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/message-style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>{{ animal }} 정보</h1>
-        
-        {% if img_path %}
-        <div class="image-container">
-            <img src="{{ img_path }}" alt="{{ animal }} 이미지">
-        </div>
-        {% endif %}
-        
-        <div class="info-container">
-            {{ info | safe }}
+    <div class="ios-container">
+        <div class="status-bar">
+            <div class="time">9:45</div>
+            <div class="status-icons">
+                <span class="signal">●●●●</span>
+                <span class="wifi">●●●</span>
+                <span class="battery">100%</span>
+            </div>
         </div>
         
-        <div class="action-buttons">
-            <a href="/" class="action-button">다른 이미지 분석하기</a>
-            <a href="javascript:history.back()" class="action-button">이전 페이지로 돌아가기</a>
+        <div class="chat-header">
+            <div class="back-button">
+                <a href="/">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path>
+                    </svg>
+                </a>
+            </div>
+            <div class="chat-title">
+                <div class="contact-name">ZooBuddy</div>
+                <div class="status">동물 분석 챗봇</div>
+            </div>
+            <div class="contact-info">
+                <svg width="24" height="24" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"></path>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="messages-container" id="messagesContainer">
+            <!-- 시스템 메시지 -->
+            <div class="date-divider">오늘</div>
+            
+            <!-- 분석 중 메시지 -->
+            <div class="message-row received">
+                <div class="message-bubble">
+                    이미지를 분석 중입니다...
+                </div>
+                <div class="message-time">오전 9:43</div>
+            </div>
+            
+            <!-- 업로드된 이미지 (있는 경우) -->
+            {% if img_path %}
+            <div class="message-row sent">
+                <div class="message-bubble image-bubble">
+                    <img src="{{ img_path }}" alt="{{ animal }} 이미지" class="uploaded-image">
+                </div>
+                <div class="message-time">오전 9:44</div>
+            </div>
+            {% endif %}
+            
+            <!-- 결과 메시지 제목 -->
+            <div class="message-row received">
+                <div class="message-bubble">
+                    <span class="result-title">{{ animal }} 정보</span>
+                </div>
+                <div class="message-time">오전 9:44</div>
+            </div>
+            
+            <!-- 동적으로 추가될 메시지 컨테이너 -->
+            <div id="animalInfoMessages"></div>
+            
+            <!-- 연결 메시지 -->
+            <div class="message-row received">
+                <div class="message-bubble action-bubble">
+                    <a href="/" class="action-link">다른 이미지 분석하기</a>
+                </div>
+                <div class="message-time">오전 9:45</div>
+            </div>
+        </div>
+        
+        <!-- 메시지 입력 영역 (비활성화됨) -->
+        <div class="message-input-container">
+            <div class="message-input-wrapper">
+                <div class="message-input" contenteditable="false" placeholder="메시지..."></div>
+                <button class="send-button" disabled>
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const animalInfoMessages = document.getElementById('animalInfoMessages');
+            const infoText = `{{ info | safe }}`;
+            
+            // 메시지 분할 (문장 또는 마침표 기준)
+            const sentences = infoText.split(/(?<=[\.\?\!]) (?=[가-힣A-Z])/g);
+            
+            // 적절한 길이의 메시지로 조합
+            const messages = [];
+            let currentMessage = "";
+            
+            sentences.forEach(sentence => {
+                // 문장이 너무 길면 적절한 위치에서 분할
+                if (sentence.length > 100) {
+                    const parts = splitLongSentence(sentence);
+                    parts.forEach(part => {
+                        messages.push(part.trim());
+                    });
+                } 
+                // 현재 메시지에 새 문장을 추가했을 때 너무 길어지면 새 메시지 시작
+                else if (currentMessage.length + sentence.length > 80) {
+                    if (currentMessage) {
+                        messages.push(currentMessage.trim());
+                    }
+                    currentMessage = sentence;
+                } 
+                // 현재 메시지에 문장 추가
+                else {
+                    currentMessage += (currentMessage ? " " : "") + sentence;
+                }
+            });
+            
+            // 마지막 메시지 추가
+            if (currentMessage) {
+                messages.push(currentMessage.trim());
+            }
+            
+            // 긴 문장을 분할하는 함수
+            function splitLongSentence(sentence) {
+                const parts = [];
+                let start = 0;
+                
+                while (start < sentence.length) {
+                    // 80자씩 자르되, 단어 중간에서 자르지 않도록 함
+                    let end = start + 80;
+                    if (end < sentence.length) {
+                        // 가장 가까운 공백 위치 찾기
+                        while (end > start && sentence[end] !== ' ') {
+                            end--;
+                        }
+                        // 공백을 찾지 못했다면 그냥 80자에서 자름
+                        if (end === start) {
+                            end = start + 80;
+                        }
+                    } else {
+                        end = sentence.length;
+                    }
+                    
+                    parts.push(sentence.substring(start, end));
+                    start = end + 1;
+                }
+                
+                return parts;
+            }
+            
+            // 0.5초 간격으로 메시지 표시 (타이핑 효과)
+            let delay = 500;
+            messages.forEach((message, index) => {
+                setTimeout(() => {
+                    const messageRow = document.createElement('div');
+                    messageRow.className = 'message-row received';
+                    
+                    messageRow.innerHTML = `
+                        <div class="message-bubble">
+                            ${message}
+                        </div>
+                        <div class="message-time">방금 전</div>
+                    `;
+                    
+                    animalInfoMessages.appendChild(messageRow);
+                    
+                    // 마지막 메시지가 추가된 후 컨테이너를 스크롤하여 가장 최근 메시지가 보이도록 함
+                    if (index === messages.length - 1) {
+                        const messagesContainer = document.getElementById('messagesContainer');
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+                }, delay);
+                
+                delay += 500; // 각 메시지마다 0.5초 딜레이 추가
+            });
+            
+            // 시간 업데이트 (iOS 스타일)
+            function updateTime() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const ampm = hours >= 12 ? '오후' : '오전';
+                const formattedHours = hours % 12 || 12;
+                const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+                
+                const timeString = `${ampm} ${formattedHours}:${formattedMinutes}`;
+                document.querySelector('.time').textContent = `${formattedHours}:${formattedMinutes}`;
+                
+                // 모든 "방금 전" 메시지 시간 업데이트
+                const recentTimes = document.querySelectorAll('.message-time');
+                recentTimes.forEach(timeEl => {
+                    if (timeEl.textContent === '방금 전') {
+                        timeEl.textContent = timeString;
+                    }
+                });
+            }
+            
+            // 페이지 로드 시 시간 업데이트
+            updateTime();
+        });
+    </script>
 </body>
 </html>
