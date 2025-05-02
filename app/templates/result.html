@@ -100,42 +100,40 @@
             const animalInfoMessages = document.getElementById('animalInfoMessages');
             const infoText = `{{ info | safe }}`;
             
-            // 텍스트 분할을 위한 기능 개선 - 온점(.)으로 끝나는 문장 단위로 분할
+            // 텍스트 분할 개선 - 마침표(.)를 기준으로 문장 분할
             function splitIntoSentences(text) {
-                // 정규식을 사용하여 문장 분리 (마침표, 물음표, 느낌표 등으로 끝나는 문장)
-                const sentencePattern = /[^.!?]+[.!?]+/g;
-                const sentences = text.match(sentencePattern) || [];
+                // 마침표, 느낌표, 물음표로 끝나는 문장 단위로 분할
+                const sentenceEnders = /([.!?])\s+/g;
+                const sentences = text.split(sentenceEnders);
                 
-                // 마지막 문장이 구두점으로 끝나지 않는 경우 처리
-                const remainingText = text.replace(sentencePattern, '').trim();
-                if (remainingText) {
-                    sentences.push(remainingText);
+                // 분할된 문장 재구성 (구분자가 제거되는 문제 해결)
+                const result = [];
+                for (let i = 0; i < sentences.length - 1; i += 2) {
+                    if (sentences[i]) {
+                        result.push(sentences[i] + sentences[i+1]);
+                    }
                 }
                 
-                return sentences;
+                // 마지막 부분이 구두점으로 끝나지 않는 경우 처리
+                if (sentences.length % 2 === 1 && sentences[sentences.length - 1]) {
+                    result.push(sentences[sentences.length - 1]);
+                }
+                
+                return result;
             }
 
-            // 문장을 적절한 길이로 묶어 메시지 생성
+            // 메시지 생성 로직 개선
             function createMessages(sentences) {
                 const messages = [];
                 let currentMessage = "";
+                const MAX_LENGTH = 150; // 메시지 최대 길이 확장
                 
                 sentences.forEach(sentence => {
-                    // 문장이 너무 길면 (80자 이상) 단어 단위로 분할
-                    if (sentence.length > 80) {
+                    // 현재 메시지에 새 문장을 추가했을 때 너무 길어지면 새 메시지 시작
+                    if (currentMessage.length + sentence.length > MAX_LENGTH) {
                         if (currentMessage) {
                             messages.push(currentMessage.trim());
-                            currentMessage = "";
                         }
-                        
-                        const parts = splitLongSentence(sentence);
-                        parts.forEach(part => {
-                            messages.push(part.trim());
-                        });
-                    } 
-                    // 현재 메시지에 새 문장을 추가했을 때 너무 길어지면 새 메시지 시작
-                    else if (currentMessage.length + sentence.length > 80) {
-                        messages.push(currentMessage.trim());
                         currentMessage = sentence;
                     } 
                     // 현재 메시지에 문장 추가
@@ -187,7 +185,7 @@
             const messages = createMessages(sentences);
             
             // 0.5초 간격으로 메시지 표시 (타이핑 효과)
-            let delay = 500;
+            let delay = 1000;
             messages.forEach((message, index) => {
                 setTimeout(() => {
                     const messageRow = document.createElement('div');
