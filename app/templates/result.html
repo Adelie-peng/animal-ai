@@ -58,10 +58,14 @@
             </div>
             {% endif %}
             
-            <!-- 결과 메시지 제목 -->
+            <!-- 결과 메시지 제목 - Gemini AI로 생성된 문구 활용 -->
             <div class="message-row received">
                 <div class="message-bubble">
-                    <span class="result-title">{{ animal }} 정보</span>
+                    {% if animal_greeting %}
+                        {{ animal_greeting }}
+                    {% else %}
+                        {{ animal|replace("a ", "") }} 사진이네요!
+                    {% endif %}
                 </div>
                 <div class="message-time">오전 9:44</div>
             </div>
@@ -96,40 +100,59 @@
             const animalInfoMessages = document.getElementById('animalInfoMessages');
             const infoText = `{{ info | safe }}`;
             
-            // 메시지 분할 (문장 또는 마침표 기준)
-            const sentences = infoText.split(/(?<=[\.\?\!]) (?=[가-힣A-Z])/g);
-            
-            // 적절한 길이의 메시지로 조합
-            const messages = [];
-            let currentMessage = "";
-            
-            sentences.forEach(sentence => {
-                // 문장이 너무 길면 적절한 위치에서 분할
-                if (sentence.length > 100) {
-                    const parts = splitLongSentence(sentence);
-                    parts.forEach(part => {
-                        messages.push(part.trim());
-                    });
-                } 
-                // 현재 메시지에 새 문장을 추가했을 때 너무 길어지면 새 메시지 시작
-                else if (currentMessage.length + sentence.length > 80) {
-                    if (currentMessage) {
-                        messages.push(currentMessage.trim());
-                    }
-                    currentMessage = sentence;
-                } 
-                // 현재 메시지에 문장 추가
-                else {
-                    currentMessage += (currentMessage ? " " : "") + sentence;
+            // 텍스트 분할을 위한 기능 개선 - 온점(.)으로 끝나는 문장 단위로 분할
+            function splitIntoSentences(text) {
+                // 정규식을 사용하여 문장 분리 (마침표, 물음표, 느낌표 등으로 끝나는 문장)
+                const sentencePattern = /[^.!?]+[.!?]+/g;
+                const sentences = text.match(sentencePattern) || [];
+                
+                // 마지막 문장이 구두점으로 끝나지 않는 경우 처리
+                const remainingText = text.replace(sentencePattern, '').trim();
+                if (remainingText) {
+                    sentences.push(remainingText);
                 }
-            });
-            
-            // 마지막 메시지 추가
-            if (currentMessage) {
-                messages.push(currentMessage.trim());
+                
+                return sentences;
+            }
+
+            // 문장을 적절한 길이로 묶어 메시지 생성
+            function createMessages(sentences) {
+                const messages = [];
+                let currentMessage = "";
+                
+                sentences.forEach(sentence => {
+                    // 문장이 너무 길면 (80자 이상) 단어 단위로 분할
+                    if (sentence.length > 80) {
+                        if (currentMessage) {
+                            messages.push(currentMessage.trim());
+                            currentMessage = "";
+                        }
+                        
+                        const parts = splitLongSentence(sentence);
+                        parts.forEach(part => {
+                            messages.push(part.trim());
+                        });
+                    } 
+                    // 현재 메시지에 새 문장을 추가했을 때 너무 길어지면 새 메시지 시작
+                    else if (currentMessage.length + sentence.length > 80) {
+                        messages.push(currentMessage.trim());
+                        currentMessage = sentence;
+                    } 
+                    // 현재 메시지에 문장 추가
+                    else {
+                        currentMessage += (currentMessage ? " " : "") + sentence;
+                    }
+                });
+                
+                // 마지막 메시지 추가
+                if (currentMessage) {
+                    messages.push(currentMessage.trim());
+                }
+                
+                return messages;
             }
             
-            // 긴 문장을 분할하는 함수
+            // 긴 문장을 분할하는 함수 - 단어 단위로 나누어 중간에 잘리지 않게 함
             function splitLongSentence(sentence) {
                 const parts = [];
                 let start = 0;
@@ -156,6 +179,12 @@
                 
                 return parts;
             }
+            
+            // 문장 분할
+            const sentences = splitIntoSentences(infoText);
+            
+            // 메시지 생성
+            const messages = createMessages(sentences);
             
             // 0.5초 간격으로 메시지 표시 (타이핑 효과)
             let delay = 500;
