@@ -1,0 +1,52 @@
+# ===============================
+# 🌐 웹 프레임워크 및 서버
+# ===============================
+fastapi==0.115.12
+uvicorn==0.34.2
+starlette==0.46.2
+python-multipart==0.0.20
+Jinja2==3.1.6
+
+# ===============================
+# 🧠 딥러닝 및 이미지 처리
+# ===============================
+torch==2.7.0
+torchvision==0.22.0
+numpy==2.2.5
+pillow==11.2.1
+mobile_sam @ git+https://github.com/dhkim2810/MobileSAM.git@a00e905633954fa29c98c1d93f052847bc5fa0e2
+clip @ git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1
+
+# ===============================
+# 🔍 크롤링 및 웹 스크래핑
+# ===============================
+requests==2.32.3
+beautifulsoup4==4.13.4
+selenium==4.31.0
+webdriver-manager==4.0.2
+
+# ===============================
+# 🗃️ 환경 변수 및 설정
+# ===============================
+python-dotenv==1.1.0
+
+# ===============================
+# 🤖 Google API (Gemini AI용)
+# ===============================
+google-generativeai==0.8.5
+google-ai-generativelanguage==0.6.15
+google-api-core==2.25.0rc0
+google-api-python-client==2.169.0
+google-auth==2.39.0
+google-auth-httplib2==0.2.0
+httplib2==0.22.0
+proto-plus==1.26.1
+protobuf==5.29.4
+googleapis-common-protos==1.70.0
+
+# ===============================
+# 🛠️ 유틸리티 및 기타
+# ===============================
+pydantic==2.11.3
+typing-extensions==4.13.2
+colorama==0.4.6

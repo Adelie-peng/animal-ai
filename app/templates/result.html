@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ animal }} 정보</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ animal }} 정보</h1>
+        
+        {% if img_path %}
+        <div class="image-container">
+            <img src="{{ img_path }}" alt="{{ animal }} 이미지">
+        </div>
+        {% endif %}
+        
+        <div class="info-container" id="info-text">
+            {{ info | safe }}
+        </div>
+
+        <!-- TTS 버튼 추가 -->
+        <div class="tts-button-container">
+            <button onclick="speakText()" class="action-button">음성으로 듣기</button>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/" class="action-button">다른 이미지 분석하기</a>
+            <a href="javascript:history.back()" class="action-button">이전 페이지로 돌아가기</a>
+        </div>
+    </div>
+
+    <!-- TTS 기능을 위한 JavaScript -->
+    <script>
+        function speakText() {
+            const text = document.getElementById("info-text").innerText;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>

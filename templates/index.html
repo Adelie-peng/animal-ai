@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+    <title>동물 챗봇</title>
+</head>
+<body>
+    <h1>🐾 동물 정보 챗봇</h1>
+    <form method="post">
+        <label>동물 이름 (한글):</label><br>
+        <input type="text" name="korean_name" required><br><br>
+        <label>질문:</label><br>
+        <input type="text" name="question" required><br><br>
+        <input type="submit" value="질문하기">
+    </form>
+    {% if answer %}
+        <h2>🧠 답변</h2>
+        <p>{{ answer|safe }}</p>
+    {% endif %}
+</body>
+</html>

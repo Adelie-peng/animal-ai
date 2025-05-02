@@ -1,0 +1,23 @@
+# Python : 파이썬 컴파일된 바이트코드 파일 제외
+__pycache__/
+*.pyc
+
+# Environment : 민감한 환경 변수 파일 제외
+.env
+
+# Uploads : 사용자 업로드 파일 제외
+uploads/
+
+# MobileSAM weights : 큰 용량의 모델 가중치 파일 제외
+external/MobileSAM/weights/*.pt
+
+# IDE : IDE 설정 파일 제외
+.vscode/
+.idea/
+
+# Database : 생성된 데이터베이스 파일 제외
+data/database/*.json
+
+# Logs : 로그 파일 제외
+*.log
+logs/
