@@ -181,7 +181,7 @@ class AnimalDataService:
             logger.error(f"Error retrieving animal info: {str(e)}")
             return None
     
-    def translate_animal_name(self, name: str, source_lang: str, target_lang: str) -> Optional[str]:
+    def translate_animal_name(self, name, source_lang, target_lang):
         """
         동물 이름 번역
         
@@ -189,7 +189,7 @@ class AnimalDataService:
             name (str): 번역할 동물 이름
             source_lang (str): 원본 언어 ('ko' 또는 'en')
             target_lang (str): 대상 언어 ('ko' 또는 'en')
-            
+                
         Returns:
             Optional[str]: 번역된 이름 또는 None (번역 실패 시)
         """
@@ -197,15 +197,21 @@ class AnimalDataService:
             # 입력값 전처리
             name = name.lower().strip()
             
+            # 디버깅 로그 추가
+            print(f"DEBUG: Translating {name} from {source_lang} to {target_lang}")
+            
             # 동일 언어인 경우 그대로 반환
             if source_lang == target_lang:
                 return name
-                
+                    
             # 번역 방향에 따른 필드 설정
             source_field = "name_ko" if source_lang == "ko" else "name_en"
             target_field = "name_ko" if target_lang == "ko" else "name_en"
             
-            # 먼저 번역 테이블에서 검색
+            # 디버깅 로그 추가
+            print(f"DEBUG: Query - SELECT {target_field} FROM animal_translations WHERE LOWER({source_field}) = '{name}'")
+            
+            # 번역 테이블에서 검색
             self.cursor.execute(f'''
             SELECT {target_field}
             FROM animal_translations
@@ -214,10 +220,14 @@ class AnimalDataService:
             
             result = self.cursor.fetchone()
             
-            if result:
+            # 디버깅 로그 추가
+            print(f"DEBUG: Translation result from animal_translations: {result}")
+            
+            if result and result[0]:
                 return result[0]
-                
+                    
             # 번역 테이블에 없으면 동물 정보 테이블에서 검색
+            print(f"DEBUG: Trying animals table...")
             self.cursor.execute(f'''
             SELECT {target_field}
             FROM animals
@@ -225,26 +235,16 @@ class AnimalDataService:
             ''', (name,))
             
             result = self.cursor.fetchone()
+            print(f"DEBUG: Translation result from animals table: {result}")
             
-            if result:
-                # 번역 테이블에 추가
-                source_val = name
-                target_val = result[0]
-                
-                self.cursor.execute('''
-                INSERT OR IGNORE INTO animal_translations (name_ko, name_en)
-                VALUES (?, ?)
-                ''', (source_val if source_lang == "ko" else target_val, 
-                      source_val if source_lang == "en" else target_val))
-                
-                self.conn.commit()
+            if result and result[0]:
                 return result[0]
-                
-            logger.warning(f"No translation found for: {name} ({source_lang} -> {target_lang})")
+                    
+            print(f"DEBUG: No translation found for: {name} ({source_lang} -> {target_lang})")
             return None
-            
+                
         except Exception as e:
-            logger.error(f"Translation error: {str(e)}")
+            print(f"DEBUG: Translation error: {str(e)}")
             return None
     
     def get_conservation_info(self, status_code: str) -> Dict[str, str]:

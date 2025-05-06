@@ -78,6 +78,10 @@ async def analyze_animal(request: Request, file: UploadFile = File(...)) -> Anal
             # 동물 분류
             classification_result = classifier.classify_animal(image, mask)
             
+            # 분류 결과 로깅 (디버깅용)
+            logger.info(f"CLIP 분류 결과: {classification_result['class']}")
+            logger.info(f"상위 3개 결과: {classification_result['top3']}")
+            
             # 데이터베이스에서 정보 조회
             animal_info = db_service.get_info(classification_result["class"])
             if not animal_info:
@@ -115,29 +119,4 @@ async def analyze_animal(request: Request, file: UploadFile = File(...)) -> Anal
     finally:
         # 파일 핸들러 정리
         await file.close()
-
-@router.post("/analyze/result", response_model=dict)
-async def get_analysis_result(request: Request):
-    """
-    세션에 저장된 분석 결과를 가져와 반환합니다.
-    
-    Args:
-        request (Request): FastAPI 요청 객체 (세션 접근용)
-    
-    Returns:
-        dict: 분석 결과를 포함하는 응답 객체
-    """
-    try:
-        # 세션에서 분석 결과 데이터 가져오기
-        result_data = request.session.get("analysis_result", {})
         
-        # 세션에서 데이터 삭제
-        if "analysis_result" in request.session:
-            del request.session["analysis_result"]
-            
-        return result_data
-        
-    except Exception as e:
-        logger.error(f"Failed to get analysis result: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get analysis result")
-    

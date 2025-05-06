@@ -51,10 +51,12 @@ class AnimalDatabase:
             info = self.database.get(animal_class)
             if not info:
                 logger.warning(f"No information found for: {animal_class}")
-                return {"message": "정보를 찾을 수 없습니다"}
+                # 데이터베이스에 없는 경우 일반적인 설명 반환
+                return {"description": f"{animal_class}에 대한 세부 정보는 아직 준비 중이에요. 하지만 자연의 일부인 모든 동물들은 각자 독특하고 아름다운 특징을 가지고 있답니다!"}
                 
             return info
             
         except Exception as e:
             logger.error(f"Error retrieving animal info: {str(e)}")
             return {"error": "데이터베이스 조회 중 오류가 발생했습니다"}
+        

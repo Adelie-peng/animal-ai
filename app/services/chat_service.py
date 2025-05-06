@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import logging
 import google.generativeai as genai
 from dataclasses import dataclass
+from app.services.animal_data import animal_data_service
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class ChatBotService:
         동물 정보를 기반으로 친근한 응답을 생성합니다.
         
         Args:
-            animal_name: 동물 이름
+            animal_name: 동물 이름 (영문)
             animal_info: 동물 정보 딕셔너리
             
         Returns:
@@ -50,10 +51,19 @@ class ChatBotService:
             ChatError: 응답 생성 실패 시
         """
         try:
-            # 프롬프트 템플릿 작성
+            # 동물 이름 전처리
+            cleaned_name = animal_name.lower().replace('a ', '').replace('the ', '').strip()
+            
+            # 영어명을 한글명으로 번역
+            korean_name = animal_data_service.translate_animal_name(cleaned_name, 'en', 'ko')
+            
+            # 번역이 안 된 경우 영문명 사용
+            if not korean_name:
+                korean_name = cleaned_name
+                
             description = animal_info.get('description', '정보가 없습니다.')
             prompt = f"""**동물 정보**
-이름: {animal_name}
+이름: {korean_name}
 설명: {description}
 
 **요청사항**
@@ -77,10 +87,10 @@ class ChatBotService:
             )
 
             if not response.text:
-                logger.warning(f"Empty response received for {animal_name}")
+                logger.warning(f"Empty response received for {korean_name}")
                 return "죄송해요, 지금은 답변을 생성하기 어려워요."
 
-            logger.info(f"Successfully generated response for {animal_name}")
+            logger.info(f"Successfully generated response for {korean_name}")
             return response.text
 
         except Exception as e:
