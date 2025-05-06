@@ -6,10 +6,13 @@ from app.services.sam_service import sam_service
 from app.services.classifier_service import AnimalClassifier
 from app.services.db_service import AnimalDatabase
 from app.services.chat_service import ChatBotService
+from app.services.animal_data import animal_data_service
+from app.services.storage_service import TempStorageService
 from PIL import Image
 import numpy as np
 import io
 import logging
+import uuid
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -32,9 +35,10 @@ router = APIRouter()
 classifier = AnimalClassifier()
 db_service = AnimalDatabase()
 chatbot_service = ChatBotService()
+temp_storage = TempStorageService()  # 싱글톤 인스턴스 사용
 
-@router.post("/analyze/", response_model=AnalysisResponse)
-async def analyze_animal(request: Request, file: UploadFile = File(...)) -> AnalysisResponse:
+@router.post("/analyze/")
+async def analyze_animal(request: Request, file: UploadFile = File(...)):
     """
     동물 이미지를 분석하여 종류를 식별하고 관련 정보를 반환합니다.
     
@@ -43,7 +47,7 @@ async def analyze_animal(request: Request, file: UploadFile = File(...)) -> Anal
         file (UploadFile): 분석할 동물 이미지 파일
     
     Returns:
-        AnalysisResponse: 분석 결과를 포함하는 응답 객체
+        RedirectResponse: 결과 페이지로 리다이렉트
     
     Raises:
         HTTPException: 이미지 처리 또는 분석 중 오류 발생 시
@@ -93,24 +97,29 @@ async def analyze_animal(request: Request, file: UploadFile = File(...)) -> Anal
                 classification_result["class"], 
                 animal_info
             )
-
-            # 결과 생성
-            result = AnalysisResponse(
-                animal=classification_result["class"],
-                confidence=classification_result["confidence"],
-                top3_predictions=classification_result["top3"],
-                info=animal_info,
-                friendly_message=friendly_message
+            
+            # 번역된 동물 이름을 가져오기
+            cleaned_animal_name = classification_result["class"].replace("a ", "").strip()
+            korean_name = animal_data_service.translate_animal_name(
+                cleaned_animal_name, 
+                'en', 
+                'ko'
             )
-            
-            # 세션에 분석 결과 저장 (POST-Redirect-GET 패턴용)
-            request.session["analysis_result"] = {
+
+            # UUID 생성 및 임시 저장소에 분석 결과 저장
+            result_id = str(uuid.uuid4())
+            temp_storage.store(result_id, {
                 "animal": classification_result["class"],
+                "animal_greeting": f"{korean_name or cleaned_animal_name} 사진이네요!",
                 "friendly_message": friendly_message,
-                "img_path": ""  # 이미지 경로가 필요하면 여기에 추가
-            }
+                "img_path": ""
+            })
             
-            return result
+            # 주기적으로 만료된 임시 데이터 정리
+            temp_storage.cleanup()
+            
+            # 결과 페이지로 리다이렉트
+            return RedirectResponse(f"/result?id={result_id}", status_code=303)
 
         except Exception as e:
             logger.error(f"Analysis failed: {str(e)}")
@@ -119,4 +128,23 @@ async def analyze_animal(request: Request, file: UploadFile = File(...)) -> Anal
     finally:
         # 파일 핸들러 정리
         await file.close()
+
+# 결과 조회 엔드포인트
+@router.get("/results/{result_id}")
+async def get_analysis_results(result_id: str):
+    """
+    임시 저장소에서 분석 결과를 가져옵니다.
+    
+    Args:
+        result_id (str): 분석 결과 ID
         
+    Returns:
+        JSONResponse: 분석 결과를 포함하는 응답
+    """
+    # 임시 저장소에서 결과 조회
+    result = temp_storage.get(result_id)
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Analysis result not found or expired")
+    
+    return JSONResponse(content=result)

@@ -10,6 +10,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from app.routers import analyze, predict, upload
 from app.services.animal_data import animal_data_service
+from app.services.storage_service import TempStorageService
 
 # 환경 변수 로드
 load_dotenv()
@@ -53,6 +54,9 @@ templates = Jinja2Templates(directory=str(ROOT_PATH / "app" / "templates"))
 app.include_router(analyze.router, prefix="/api")
 app.include_router(predict.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
+
+# 임시 저장소 서비스 인스턴스 생성
+temp_storage = TempStorageService()  # 싱글톤 인스턴스 사용
 
 # MobileSAM 모델 가중치 경로 설정 (다른 서비스에서 참조 가능)
 MOBILE_SAM_WEIGHTS = MOBILE_SAM_PATH / 'weights' / 'mobile_sam.pt'
@@ -140,36 +144,44 @@ async def root(request: Request):
 
 # 결과 페이지 핸들러 - GET 방식
 @app.get("/result")
-async def result_page(request: Request):
-    # 세션에서 분석 결과 데이터 가져오기
-    result_data = request.session.get("analysis_result", {})
+async def result_page(request: Request, id: str = None):
+    # 쿼리 파라미터에서 ID 가져오기
+    if not id:
+        print("DEBUG: No id found in query parameters")
+        return templates.TemplateResponse("result.html", {
+            "request": request,
+            "animal": "",
+            "animal_greeting": "분석 결과가 없습니다.",
+            "info": "",
+            "img_path": ""
+        })
     
-    # 디버깅: 세션 데이터 출력
-    print(f"DEBUG: Session result_data: {result_data}")
+    # 임시 저장소에서 결과 가져오기
+    result_data = temp_storage.get(id)
     
-    # 동물 클래스 가져오기
+    # 결과 데이터가 없으면 오류 처리
+    if not result_data:
+        print(f"DEBUG: No data found for id: {id}")
+        return templates.TemplateResponse("result.html", {
+            "request": request,
+            "animal": "",
+            "animal_greeting": "분석 결과가 만료되었거나 찾을 수 없습니다.",
+            "info": "",
+            "img_path": ""
+        })
+    
+    # 데이터 가져오기
     animal = result_data.get("animal", "")
-    
-    # Gemini AI로 동물 소개 문구 생성
-    animal_greeting = ""
-    if animal:
-        animal_greeting = generate_animal_greeting(animal)
-        print(f"DEBUG: Generated greeting: {animal_greeting}")
-        # 세션에 저장 (템플릿에서 사용)
-        result_data["animal_greeting"] = animal_greeting
+    animal_greeting = result_data.get("animal_greeting", "")
     
     # 디버깅: 최종 템플릿 데이터 출력
     template_data = {
         "request": request,
-        "animal": result_data.get("animal", ""),
+        "animal": animal,
         "animal_greeting": animal_greeting,
         "info": result_data.get("friendly_message", ""),
         "img_path": result_data.get("img_path", "")
     }
     print(f"DEBUG: Template data: {template_data}")
-    
-    # 선택적으로 세션에서 데이터 삭제 (일회성 데이터로 처리)
-    if "analysis_result" in request.session:
-        del request.session["analysis_result"]
     
     return templates.TemplateResponse("result.html", template_data)
